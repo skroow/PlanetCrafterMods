@@ -28,6 +28,7 @@ namespace creative
         public static ActionCrafter testss = new ActionCrafter();
 
         public static ConfigEntry<Key> Keyfly;
+        public static ConfigEntry<Key> KeyCreativeCrafter;
 
         public static DataConfig.GameSettingMode creatice_mode = (DataConfig.GameSettingMode)4;
         public static DataConfig.CraftableIn creative_Crafter = (DataConfig.CraftableIn)7;
@@ -35,11 +36,13 @@ namespace creative
         private readonly Harmony harmony = new Harmony("AddCraftableObjectsPlugin");
 
 
-        private void Awake() {
+        private void Awake()
+        {
 
             testss.craftTime = 1;
             testss.craftableIdentifier = creative_Crafter;
             Creative.Keyfly = base.Config.Bind<Key>("MySection", "Choose a key for Flying from the list of keys above.", Key.F1, "TEST");
+            Creative.KeyCreativeCrafter = base.Config.Bind<Key>("MySection", "Choose a key for creative crafter from the list of keys above.", Key.C, "TEST");
 
             harmony.PatchAll(typeof(creative.Creative));
             Logger.LogInfo($"Plugin AddCraftableObjectsPlugin is loaded!");
@@ -50,7 +53,7 @@ namespace creative
         private void Update()
         {
             int gameMode = (int)GameSettingsHandler.GetGameMode();
-            
+
             bool wasPressedThisFrame = Keyboard.current[Creative.Keyfly.Value].wasPressedThisFrame;
             PlayerMovable playerMovable = UnityEngine.Object.FindObjectOfType<PlayerMovable>();
             bool flag = playerMovable != null;
@@ -67,13 +70,15 @@ namespace creative
                 else { return; }
             }
 
-            bool wasPressedThisFrame1 = Keyboard.current[Key.C].wasPressedThisFrame;
+            bool wasPressedThisFrame1 = Keyboard.current[Creative.KeyCreativeCrafter.Value].wasPressedThisFrame;
             if (wasPressedThisFrame1)
             {
                 if ((int)GameSettingsHandler.GetGameMode() == 4)
                 {
                     Debug.Log((int)GameSettingsHandler.GetGameMode() == 4);
                     UiWindowCraft uiWindowCraft = (UiWindowCraft)Managers.GetManager<WindowsHandler>().OpenAndReturnUi(DataConfig.UiType.Craft);
+                    uiWindowCraft.grid.cellSize = new Vector2(68, 68);
+                    uiWindowCraft.grid.spacing = new Vector2(1, 1);
                     uiWindowCraft.SetCrafter(testss, true);
                     Debug.Log("crafter key");
                 }
@@ -94,7 +99,8 @@ namespace creative
 
         [HarmonyPrefix]
         [HarmonyPatch(typeof(SaveFilesCreateNew), "OnEnable")]
-        private static void gameMode(ref DropDownAndHover ___dropDownGameMode,ref DropDownAndHover ___dropDownSpawn, ref SaveFilesSelector ___saveFilesSelector, ref TMP_InputField ___newNameInput, ref bool __runOriginal) {
+        private static void gameMode(ref DropDownAndHover ___dropDownGameMode, ref DropDownAndHover ___dropDownSpawn, ref SaveFilesSelector ___saveFilesSelector, ref TMP_InputField ___newNameInput, ref bool __runOriginal)
+        {
             Creative.SetNameOfNewSave(ref ___saveFilesSelector, ref ___newNameInput, ref ___dropDownGameMode, ref __runOriginal);
             ___dropDownGameMode.ClearOptions();
             List<string> list = new List<string>();
@@ -116,12 +122,12 @@ namespace creative
                 list4.Add(Readable.GetSpawnDescription(spawn));
             }
             ___dropDownSpawn.AddOptions(list3, list4);
-            
+
             __runOriginal = false;
         }
         [HarmonyPrefix]
         [HarmonyPatch(typeof(SaveFilesCreateNew), "SetNameOfNewSave")]
-        private static void SetNameOfNewSave(ref SaveFilesSelector ___saveFilesSelector, ref TMP_InputField ___newNameInput , ref DropDownAndHover ___dropDownGameMode, ref bool __runOriginal)
+        private static void SetNameOfNewSave(ref SaveFilesSelector ___saveFilesSelector, ref TMP_InputField ___newNameInput, ref DropDownAndHover ___dropDownGameMode, ref bool __runOriginal)
         {
 
             string[] files = Directory.GetFiles(Application.persistentDataPath, "*.json");
@@ -157,16 +163,16 @@ namespace creative
             if (gameMode == 4)
             {
                 __result = true;
-                
+
             }
             return false;
         }
-/*                ___allowedTaggedSurfaces.Add(DataConfig.HomemadeTag.SurfaceTerrain);
-                ___allowedTaggedSurfaces.Add(DataConfig.HomemadeTag.SurfaceFloor);
-                ___allowedTaggedSurfaces.Add(DataConfig.HomemadeTag.SurfaceWall);
-                ___allowedTaggedSurfaces.Add(DataConfig.HomemadeTag.SurfaceTopContainer);
-                ___allowedTaggedSurfaces.Add(DataConfig.HomemadeTag.ConstructibleCollisionDetector);
-                ___allowedTaggedSurfaces.Add(DataConfig.HomemadeTag.IgnoreCollisionForConstraintNotColling);*/
+        /*                ___allowedTaggedSurfaces.Add(DataConfig.HomemadeTag.SurfaceTerrain);
+                        ___allowedTaggedSurfaces.Add(DataConfig.HomemadeTag.SurfaceFloor);
+                        ___allowedTaggedSurfaces.Add(DataConfig.HomemadeTag.SurfaceWall);
+                        ___allowedTaggedSurfaces.Add(DataConfig.HomemadeTag.SurfaceTopContainer);
+                        ___allowedTaggedSurfaces.Add(DataConfig.HomemadeTag.ConstructibleCollisionDetector);
+                        ___allowedTaggedSurfaces.Add(DataConfig.HomemadeTag.IgnoreCollisionForConstraintNotColling);*/
         [HarmonyPostfix]
         [HarmonyPatch(typeof(ConstraintOnSurfaces), "LateUpdate")]
         private static void build(ref List<DataConfig.HomemadeTag> ___allowedTaggedSurfaces, ref bool ___isConstraintRespected, ref PlayerAimController ___playerAimController)
@@ -193,18 +199,18 @@ namespace creative
             int gameMode = (int)GameSettingsHandler.GetGameMode();
             if (gameMode == 4)
             {
-                
+
                 __instance.AddEnabledState(DataConfig.MultiToolState.Deconstruct);
                 __instance.AddEnabledState(DataConfig.MultiToolState.Build);
 
             }
         }
 
-        
+
 
         [HarmonyPrefix]
         [HarmonyPatch(typeof(BaseHudHandler), "UpdateHud")]
-        private static void creativeTxt(ref GameObject ___subjectPositionDecoration,ref PlayerCanAct ___playerCanAct, ref TextMeshProUGUI ___textPositionDecoration,ref int ___frameTillLastSecond, ref float ___updateHudEvery,ref PlayModeHandler ___playModeHandler, ref PlayerMovable ___playerMovable, ref bool __runOriginal)
+        private static void creativeTxt(ref GameObject ___subjectPositionDecoration, ref PlayerCanAct ___playerCanAct, ref TextMeshProUGUI ___textPositionDecoration, ref int ___frameTillLastSecond, ref float ___updateHudEvery, ref PlayModeHandler ___playModeHandler, ref PlayerMovable ___playerMovable, ref bool __runOriginal)
         {
 
             if (___subjectPositionDecoration == null)
@@ -234,10 +240,10 @@ namespace creative
             int gameMode = (int)GameSettingsHandler.GetGameMode();
             if (gameMode == 4)
                 if (___playModeHandler.GetIsFreePlay() && gameMode != 4)
-            {
-                TextMeshProUGUI textMeshProUGUI4 = ___textPositionDecoration;
-                textMeshProUGUI4.text += " - Free Mode";
-            }
+                {
+                    TextMeshProUGUI textMeshProUGUI4 = ___textPositionDecoration;
+                    textMeshProUGUI4.text += " - Free Mode";
+                }
             if (gameMode == 4)
             {
                 TextMeshProUGUI textMeshProUGUI4 = ___textPositionDecoration;
@@ -254,8 +260,8 @@ namespace creative
 
         [HarmonyPrefix]
         [HarmonyPatch(typeof(SaveFilesSelector), "AddSaveToList")]
-        
-        private static void AddSaveToList(string _fileName, ref GameObject ___prefabSaveDisplayer, ref GameObject ___displayersContainer, ref SaveFilesSelector __instance , ref GameObject __result , ref bool __runOriginal)
+
+        private static void AddSaveToList(string _fileName, ref GameObject ___prefabSaveDisplayer, ref GameObject ___displayersContainer, ref SaveFilesSelector __instance, ref GameObject __result, ref bool __runOriginal)
         {
             __runOriginal = false;
 
@@ -276,16 +282,56 @@ namespace creative
         }
 
 
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(CraftManager), "TryToCraftInInventory")]
+        private static void TryToCraftInWorld(ActionCrafter _sourceCrafter, PlayerMainController _playerController, GroupItem groupItem, ref bool __result, ref int ___totalCraft, ref bool __runOriginal)
+        {
+            __runOriginal = false;
+            List<Group> ingredientsGroupInRecipe = groupItem.GetRecipe().GetIngredientsGroupInRecipe();
+            Inventory inventory = _playerController.GetPlayerBackpack().GetInventory();
+            bool flag = inventory.ContainsItems(ingredientsGroupInRecipe);
+            bool freeCraft = Managers.GetManager<PlayModeHandler>().GetFreeCraft();
+            bool flag2 = flag || freeCraft;
+            if (flag2)
+            {
+                if (ingredientsGroupInRecipe.Count < 1 && inventory.IsFull())
+                {
+                    Managers.GetManager<BaseHudHandler>().DisplayCursorText("UI_InventoryFull", 2f, "");
+                    __result = false;
+                }
+                if (freeCraft && inventory.IsFull())
+                {
+                    Managers.GetManager<BaseHudHandler>().DisplayCursorText("UI_InventoryFull", 2f, "");
+                    __result = false;
+                }
+                if (_sourceCrafter != testss)
+                {
+                    _sourceCrafter.CraftAnimation(groupItem);
+                }
+
+                WorldObject worldObject = WorldObjectsHandler.CreateNewWorldObject(groupItem, 0);
+                inventory.RemoveItems(ingredientsGroupInRecipe, true, true);
+                inventory.AddItem(worldObject);
+                ___totalCraft++;
+            }
+
+            __result = flag2;
+        }
+
 
 
         [HarmonyPrefix]
         [HarmonyPatch(typeof(GroupItem), "CanBeCraftedIn")]
-        private static bool CanBeCraftedIn(DataConfig.CraftableIn _craftableIdentifier, ref bool __result)
+        private static bool CanBeCraftedIn(DataConfig.CraftableIn _craftableIdentifier, ref List<DataConfig.CraftableIn> ___craftableInList, ref bool __result)
         {
-            if ((int)_craftableIdentifier == 7)
+
+
+            if ((int)_craftableIdentifier == 7 && !___craftableInList.Contains(DataConfig.CraftableIn.CraftRocket))
             {
                 __result = true;
             }
+
+
             return false;
         }
 
